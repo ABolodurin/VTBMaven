@@ -1,7 +1,10 @@
 package ru.lessonsvtb.lesson9;
 
 import java.lang.reflect.Field;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +23,7 @@ public class Main {
                     new Person("Andy", 45, "andy@gmail.com"),
                     new Person("Jack", 63, "jack@gmail.com"),
                     new Person("Valera", 21, "valera@gmail.com"));
-            for (Person person :personList) {
+            for (Person person : personList) {
                 insertObjectIntoTable(person);
             }
         } catch (SQLException e) {
@@ -64,16 +67,18 @@ public class Main {
                 if (!(field.isAnnotationPresent(Column.class))) fields.remove(field);
             });
 
-            String SQL = "CREATE TABLE " + c.getSimpleName() + " ( ";
+            StringBuilder request = new StringBuilder(
+                    "CREATE TABLE " + c.getSimpleName() + " (id INTEGER PRIMARY KEY, ");
 
             for (Field f : fields) {
                 if (f.getType().toString().contains("java.lang.String")) {
-                    SQL += f.getName() + " TEXT, ";
+                    request.append(f.getName() + " TEXT, ");
                 } else if (f.getType().toString().equals("int"))
-                    SQL += f.getName() + " INTEGER, ";
+                    request.append(f.getName() + " INTEGER, ");
             }
 
-            statement.execute(SQL + "id INTEGER PRIMARY KEY);");
+            request.delete(request.length() - 2, request.length() - 1);
+            statement.execute(request.append(");").toString());
         }
     }
 
@@ -98,13 +103,12 @@ public class Main {
                     value = "'" + value + "'";
                 values.add(value);
             }
-            String SQL = String.format("INSERT INTO %s (%s) VALUES (%s);",
+            String insert = String.format("INSERT INTO %s (%s) VALUES (%s);",
                     oClass.getSimpleName(),
                     fieldNames.toString().replace('[', ' ').replace(']', ' '),
                     values.toString().replace('[', ' ').replace(']', ' '));
 
-            //System.out.println(SQL);
-            statement.execute(SQL);
+            statement.execute(insert);
         }
     }
 
